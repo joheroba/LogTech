@@ -12,7 +12,9 @@ db.version(1).stores({
     liquidations: '++id, plateau, status, is_synced',
     sensorLogs: '++id, timestamp, road_event, driver_state, is_synced',
     contacts: '++id, name, phone, type, is_synced',
-    features: 'id, name, description, is_enabled, impact, recommendation'
+    features: 'id, name, description, is_enabled, impact, recommendation',
+    podcasts: '++id, title, content, category',
+    insurance_reports: '++id, person_dni, safety_index, validated_at'
 });
 
 // Initial seed data for demonstration
@@ -67,6 +69,35 @@ export async function seedDatabase() {
                 is_enabled: false,
                 impact: 'Libera al Administrador del control manual de boletas.',
                 recommendation: 'Recomendado cuando el volumen de gastos supere las 50 facturas/semana.'
+            },
+            {
+                id: 'podcast_edu',
+                name: 'Módulo de Podcast',
+                description: 'Capacitación manos libres mediante audio TTS.',
+                is_enabled: true,
+                impact: 'Aumenta el conocimiento normativo sin detener la operación.',
+                recommendation: 'Ideal para difundir cambios en rutas o normativas SST.'
+            },
+            {
+                id: 'insurance_pro',
+                name: 'Certificación para Seguros',
+                description: 'Generación de reportes de seguridad para aseguradoras.',
+                is_enabled: false,
+                impact: 'Permite negociar primas de seguros más bajas con datos reales.',
+                recommendation: 'Activar cuando se tenga al menos 3 meses de data de telemetría.'
+            }
+        ]);
+
+        await db.podcasts.bulkAdd([
+            {
+                title: 'Conducción en Lluvia',
+                content: 'En condiciones de lluvia, aumenta la distancia de frenado al doble. Evita giros bruscos y mantén las luces encendidas en todo momento.',
+                category: 'Seguridad'
+            },
+            {
+                title: 'Optimización de Combustible',
+                content: 'Mantener una velocidad constante y evitar aceleraciones bruscas puede ahorrar hasta un 15% de combustible en rutas largas.',
+                category: 'Eficiencia'
             }
         ]);
     }

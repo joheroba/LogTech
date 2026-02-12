@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { db, seedDatabase } from './db';
 import LiquidationModule from './modules/LiquidationModule';
 import SafetyModule from './modules/SafetyModule';
-import DashboardModule from './modules/DashboardModule';
 import ContactsModule from './modules/ContactsModule';
 import FeatureCenter from './modules/FeatureCenter';
+import PodcastModule from './modules/PodcastModule';
+import InsuranceModule from './modules/InsuranceModule';
 import Logo from './components/Logo';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -18,11 +19,12 @@ import {
   X,
   User as UserIcon,
   LogOut,
-  ChevronRight,
   Database,
   Phone,
   Wifi,
-  WifiOff
+  WifiOff,
+  Headphones,
+  ShieldCheck
 } from 'lucide-react';
 import './index.css';
 
@@ -109,6 +111,15 @@ export default function App() {
               onClick={() => setActiveTab('safety')}
               collapsed={!isSidebarOpen}
             />
+            {isFeatureEnabled('podcast_edu') && (
+              <NavItem
+                icon={<Headphones size={20} />}
+                label="Capsulas Audio"
+                active={activeTab === 'podcast'}
+                onClick={() => setActiveTab('podcast')}
+                collapsed={!isSidebarOpen}
+              />
+            )}
             <NavItem
               icon={<Phone size={20} />}
               label="Directorio"
@@ -122,6 +133,15 @@ export default function App() {
                 label="Auditoría"
                 active={activeTab === 'audit'}
                 onClick={() => setActiveTab('audit')}
+                collapsed={!isSidebarOpen}
+              />
+            )}
+            {isFeatureEnabled('insurance_pro') && (
+              <NavItem
+                icon={<ShieldCheck size={20} />}
+                label="Seguros UBI"
+                active={activeTab === 'insurance'}
+                onClick={() => setActiveTab('insurance')}
                 collapsed={!isSidebarOpen}
               />
             )}
@@ -152,6 +172,8 @@ export default function App() {
               {activeTab === 'contacts' && 'Directorio de Contactos'}
               {activeTab === 'features' && 'Escalabilidad Modular'}
               {activeTab === 'audit' && 'Auditoría del Sistema'}
+              {activeTab === 'podcast' && 'Podcast de Capacitación'}
+              {activeTab === 'insurance' && 'Certificación de Seguros'}
             </h2>
             <p className="text-slate-400 text-sm">Martes, 10 de Febrero 2026</p>
           </div>
@@ -169,6 +191,8 @@ export default function App() {
           {activeTab === 'safety' && <SafetyModule vehicleType={vehicleType} />}
           {activeTab === 'contacts' && <ContactsModule />}
           {activeTab === 'features' && <FeatureCenter />}
+          {activeTab === 'podcast' && <PodcastModule />}
+          {activeTab === 'insurance' && <InsuranceModule />}
 
           {/* Placeholder for settings / audit if not fully implemented */}
           {(activeTab === 'settings' || activeTab === 'audit') && (
