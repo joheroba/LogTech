@@ -17,7 +17,7 @@ export default defineConfig({
         theme_color: '#0f172a',
         icons: [
           {
-            src: '/aris-logo.svg',
+            src: 'aris-logo.svg',
             sizes: '192x192 512x512',
             type: 'image/svg+xml',
             purpose: 'any maskable'
