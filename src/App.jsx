@@ -6,6 +6,7 @@ import ContactsModule from './modules/ContactsModule';
 import FeatureCenter from './modules/FeatureCenter';
 import PodcastModule from './modules/PodcastModule';
 import InsuranceModule from './modules/InsuranceModule';
+import InteractiveModule from './modules/InteractiveModule';
 import Logo from './components/Logo';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -24,7 +25,8 @@ import {
   Wifi,
   WifiOff,
   Headphones,
-  ShieldCheck
+  ShieldCheck,
+  Gamepad2
 } from 'lucide-react';
 import './index.css';
 
@@ -120,6 +122,15 @@ export default function App() {
                 collapsed={!isSidebarOpen}
               />
             )}
+            {isFeatureEnabled('gamification') && (
+              <NavItem
+                icon={<Gamepad2 size={20} />}
+                label="Aris Interactiva"
+                active={activeTab === 'interactive'}
+                onClick={() => setActiveTab('interactive')}
+                collapsed={!isSidebarOpen}
+              />
+            )}
             <NavItem
               icon={<Phone size={20} />}
               label="Directorio"
@@ -174,6 +185,7 @@ export default function App() {
               {activeTab === 'audit' && 'Auditoría del Sistema'}
               {activeTab === 'podcast' && 'Aris Audio: Capacitación'}
               {activeTab === 'insurance' && 'Certificación de Seguros Aris'}
+              {activeTab === 'interactive' && 'Aris Interactiva'}
             </h2>
             <p className="text-slate-400 text-sm">Martes, 10 de Febrero 2026</p>
           </div>
@@ -193,6 +205,7 @@ export default function App() {
           {activeTab === 'features' && <FeatureCenter />}
           {activeTab === 'podcast' && <PodcastModule />}
           {activeTab === 'insurance' && <InsuranceModule />}
+          {activeTab === 'interactive' && <InteractiveModule />}
 
           {/* Placeholder for settings / audit if not fully implemented */}
           {(activeTab === 'settings' || activeTab === 'audit') && (

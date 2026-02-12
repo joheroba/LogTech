@@ -14,7 +14,8 @@ db.version(1).stores({
     contacts: '++id, name, phone, type, is_synced',
     features: 'id, name, description, is_enabled, impact, recommendation',
     podcasts: '++id, title, content, category',
-    insurance_reports: '++id, person_dni, safety_index, validated_at'
+    insurance_reports: '++id, person_dni, safety_index, validated_at',
+    contributions: '++id, driver_dni, type, status'
 });
 
 // Initial seed data for demonstration
@@ -85,6 +86,14 @@ export async function seedDatabase() {
                 is_enabled: false,
                 impact: 'Permite negociar primas de seguros más bajas con datos reales.',
                 recommendation: 'Activar cuando se tenga al menos 3 meses de data de telemetría.'
+            },
+            {
+                id: 'gamification',
+                name: 'Aris Interactiva',
+                description: 'Juegos de trivia y captura de anécdotas por voz.',
+                is_enabled: true,
+                impact: 'Reduce el estrés y fomenta la participación del conductor.',
+                recommendation: 'Efectivo para conductores con rutas de +6 horas.'
             }
         ]);
 
