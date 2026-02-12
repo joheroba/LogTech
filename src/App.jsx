@@ -5,6 +5,7 @@ import SafetyModule from './modules/SafetyModule';
 import DashboardModule from './modules/DashboardModule';
 import ContactsModule from './modules/ContactsModule';
 import FeatureCenter from './modules/FeatureCenter';
+import Logo from './components/Logo';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   LayoutDashboard,
@@ -18,15 +19,18 @@ import {
   User as UserIcon,
   LogOut,
   ChevronRight,
-  Database
+  Database,
+  Phone,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import './index.css';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [userRole, setUserRole] = useState('admin'); // Simulated role switch
-  const [vehicleType, setVehicleType] = useState('truck'); // 'truck' o 'moto'
+  const [userRole, setUserRole] = useState('admin');
+  const [vehicleType, setVehicleType] = useState('truck');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
 
   const features = useLiveQuery(() => db.features.toArray()) || [];
@@ -47,106 +51,107 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#0f172a] text-white">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#0f172a] text-white overflow-hidden">
       {/* Sidebar */}
-      <nav className="w-full md:w-64 glass-card m-0 md:m-4 md:mr-0 p-6 flex flex-col gap-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/50">
-            <Truck size={24} />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold brand-font tracking-tight">LogTech</h1>
-            <p className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">Fleet Intelligence</p>
-          </div>
-        </div>
-
-        <div className="flex gap-2 p-2 bg-slate-900/50 rounded-xl mb-6">
+      <aside className={`glass border-r border-slate-800 transition-all duration-300 flex flex-col ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
+        <div className="p-6 flex items-center justify-between border-b border-slate-800/50">
+          <Logo size={32} className={!isSidebarOpen ? "hidden" : ""} />
+          {!isSidebarOpen && <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">L</div>}
           <button
-            onClick={() => setVehicleType('truck')}
-            className={`flex-1 flex items-center justify-center gap-2 p-2 rounded-lg transition-all ${vehicleType === 'truck' ? 'bg-blue-600 text-white shadow-lg' : 'bg-transparent text-slate-500 hover:text-slate-300'}`}
+            onClick={() => setSidebarOpen(!isSidebarOpen)}
+            className="p-2 hover:bg-slate-800 rounded-lg text-slate-400"
           >
-            <Truck size={16} />
-            <span className="text-[10px] font-bold uppercase">Camión</span>
-          </button>
-          <button
-            onClick={() => setVehicleType('moto')}
-            className={`flex-1 flex items-center justify-center gap-2 p-2 rounded-lg transition-all ${vehicleType === 'moto' ? 'bg-blue-600 text-white shadow-lg' : 'bg-transparent text-slate-500 hover:text-slate-300'}`}
-          >
-            <Bike size={16} />
-            <span className="text-[10px] font-bold uppercase">Moto</span>
+            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
-        <nav className="flex flex-col gap-2">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2 mb-2">Main Menu</p>
-          <NavItem
-            icon={<LayoutDashboard size={20} />}
-            label="Dashboard"
-            active={activeTab === 'dashboard'}
-            onClick={() => setActiveTab('dashboard')}
-          />
-          <NavItem
-            icon={<Wallet size={20} />}
-            label="Liquidación"
-            active={activeTab === 'finance'}
-            onClick={() => setActiveTab('finance')}
-          />
-          <NavItem
-            icon={<ShieldAlert size={20} />}
-            label="SST & Seguridad"
-            active={activeTab === 'safety'}
-            onClick={() => setActiveTab('safety')}
-          />
-          <NavItem
-            icon={<Phone size={20} />}
-            label="Directorio"
-            active={activeTab === 'contacts'}
-            onClick={() => setActiveTab('contacts')}
-          />
-          {isFeatureEnabled('auditor') && (
+        <div className={`flex flex-col gap-8 p-6 overflow-y-auto ${!isSidebarOpen ? 'items-center' : ''}`}>
+          {/* Vehicle Switcher */}
+          <div className={`flex gap-2 p-2 bg-slate-900/50 rounded-xl ${!isSidebarOpen && 'flex-col'}`}>
+            <button
+              onClick={() => setVehicleType('truck')}
+              className={`flex-1 flex items-center justify-center gap-2 p-2 rounded-lg transition-all ${vehicleType === 'truck' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              title="Modo Camión"
+            >
+              <Truck size={16} />
+              {isSidebarOpen && <span className="text-[10px] font-bold uppercase">Camión</span>}
+            </button>
+            <button
+              onClick={() => setVehicleType('moto')}
+              className={`flex-1 flex items-center justify-center gap-2 p-2 rounded-lg transition-all ${vehicleType === 'moto' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              title="Modo Motorista"
+            >
+              <Bike size={16} />
+              {isSidebarOpen && <span className="text-[10px] font-bold uppercase">Moto</span>}
+            </button>
+          </div>
+
+          <nav className="flex flex-col gap-2">
+            {isSidebarOpen && <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2 mb-2">Menú Principal</p>}
             <NavItem
-              icon={<Database size={20} />}
-              label="Auditoría"
-              active={activeTab === 'audit'}
-              onClick={() => setActiveTab('audit')}
+              icon={<LayoutDashboard size={20} />}
+              label="Dashboard"
+              active={activeTab === 'dashboard'}
+              onClick={() => setActiveTab('dashboard')}
+              collapsed={!isSidebarOpen}
             />
-          )}
-          <NavItem
-            icon={<Settings size={20} />}
-            label="Escalabilidad"
-            active={activeTab === 'features'}
-            onClick={() => setActiveTab('features')}
-          />
-          <NavItem
-            icon={<Settings size={20} />}
-            label="Configuración"
-            active={activeTab === 'settings'}
-            onClick={() => setActiveTab('settings')}
-          />
-        </nav>
+            <NavItem
+              icon={<Wallet size={20} />}
+              label="Liquidación"
+              active={activeTab === 'finance'}
+              onClick={() => setActiveTab('finance')}
+              collapsed={!isSidebarOpen}
+            />
+            <NavItem
+              icon={<ShieldAlert size={20} />}
+              label="SST & Seguridad"
+              active={activeTab === 'safety'}
+              onClick={() => setActiveTab('safety')}
+              collapsed={!isSidebarOpen}
+            />
+            <NavItem
+              icon={<Phone size={20} />}
+              label="Directorio"
+              active={activeTab === 'contacts'}
+              onClick={() => setActiveTab('contacts')}
+              collapsed={!isSidebarOpen}
+            />
+            {isFeatureEnabled('auditor') && (
+              <NavItem
+                icon={<Database size={20} />}
+                label="Auditoría"
+                active={activeTab === 'audit'}
+                onClick={() => setActiveTab('audit')}
+                collapsed={!isSidebarOpen}
+              />
+            )}
+            <NavItem
+              icon={<Settings size={20} />}
+              label="Escalabilidad"
+              active={activeTab === 'features'}
+              onClick={() => setActiveTab('features')}
+              collapsed={!isSidebarOpen}
+            />
+          </nav>
 
-        <div className="mt-auto pt-6 border-t border-slate-800">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
-              <UserIcon size={16} />
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-medium truncate">Admin Usuario</p>
-              <p className="text-xs text-slate-500">Transervis S.A.</p>
-            </div>
+          <div className="mt-auto pt-6 border-t border-slate-800">
+            <UserProfile collapsed={!isSidebarOpen} />
           </div>
         </div>
-      </nav>
+      </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8 flex flex-col gap-6 overflow-y-auto">
-        <header className="flex flex-wrap items-center justify-between gap-4">
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <header className="p-8 pb-4 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">
-              {activeTab === 'dashboard' && 'Control Panel'}
+              {activeTab === 'dashboard' && 'Panel de Control'}
               {activeTab === 'finance' && 'Gestión de Gastos'}
               {activeTab === 'safety' && 'Seguridad Vial & SST'}
               {activeTab === 'settings' && 'Configuración de Sistema'}
+              {activeTab === 'contacts' && 'Directorio de Contactos'}
+              {activeTab === 'features' && 'Escalabilidad Modular'}
+              {activeTab === 'audit' && 'Auditoría del Sistema'}
             </h2>
             <p className="text-slate-400 text-sm">Martes, 10 de Febrero 2026</p>
           </div>
@@ -158,13 +163,15 @@ export default function App() {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 pt-4">
           {activeTab === 'dashboard' && <DashboardModule role={userRole} vehicleType={vehicleType} />}
           {activeTab === 'finance' && <LiquidationModule />}
           {activeTab === 'safety' && <SafetyModule vehicleType={vehicleType} />}
           {activeTab === 'contacts' && <ContactsModule />}
           {activeTab === 'features' && <FeatureCenter />}
-          {activeTab !== 'dashboard' && activeTab !== 'finance' && activeTab !== 'safety' && (
+
+          {/* Placeholder for settings / audit if not fully implemented */}
+          {(activeTab === 'settings' || activeTab === 'audit') && (
             <div className="glass-card p-12 flex flex-col items-center justify-center text-center opacity-50">
               <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
                 <Settings className="animate-spin-slow" />
@@ -179,22 +186,42 @@ export default function App() {
   );
 }
 
-function NavItem({ icon, label, active, onClick }) {
+function NavItem({ icon, label, active, onClick, collapsed }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all duration-200 group ${active
+      className={`flex items-center w-full px-4 py-3 rounded-xl transition-all duration-200 group ${active
         ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20'
         : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
         }`}
+      title={collapsed ? label : ""}
     >
       <div className="flex items-center gap-3">
         {icon}
-        <span className="font-medium text-sm">{label}</span>
+        {!collapsed && <span className="font-medium text-sm">{label}</span>}
       </div>
-      {active && <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_white]"></div>}
+      {!collapsed && active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_white]"></div>}
     </button>
   );
 }
 
-
+function UserProfile({ collapsed }) {
+  return (
+    <div className="flex items-center gap-3 px-2">
+      <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-800 shrink-0">
+        <UserIcon size={20} />
+      </div>
+      {!collapsed && (
+        <div className="flex-1 overflow-hidden">
+          <p className="text-sm font-bold truncate">Admin Usuario</p>
+          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Transervis S.A.</p>
+        </div>
+      )}
+      {!collapsed && (
+        <button className="text-slate-500 hover:text-red-400 transition-colors">
+          <LogOut size={18} />
+        </button>
+      )}
+    </div>
+  );
+}
