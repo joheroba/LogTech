@@ -1,6 +1,6 @@
 import Dexie from 'dexie';
 
-export const db = new Dexie('LogTechDB');
+export const db = new Dexie('ArisDB');
 
 db.version(1).stores({
     vehicles: '++id, plate, company_ruc, is_synced',
@@ -33,7 +33,7 @@ export async function seedDatabase() {
 
         await db.contacts.bulkAdd([
             { name: 'Central de Emergencias', phone: '911', type: 'Emergencia', is_synced: 1 },
-            { name: 'Administración LogTech', phone: '+51987654321', type: 'Administrador', is_synced: 1 },
+            { name: 'Soporte Aris', phone: '+51987654321', type: 'Administrador', is_synced: 1 },
             { name: 'Soporte Mecánico', phone: '0800-12345', type: 'Administrador', is_synced: 1 }
         ]);
 

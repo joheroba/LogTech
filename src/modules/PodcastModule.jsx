@@ -60,8 +60,8 @@ export default function PodcastModule() {
         <div className="flex flex-col gap-6 animate-fade-in">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-white">Micro-Podcast Logístico</h2>
-                    <p className="text-slate-500 text-sm italic">Capacitación manos libres para conductores pro.</p>
+                    <h2 className="text-2xl font-bold tracking-tight text-white">Aris Audio: Micro-Podcast</h2>
+                    <p className="text-slate-500 text-sm italic">Capacitación manos libres con tu copiloto virtual.</p>
                 </div>
                 <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-full">
                     <Headphones size={24} />

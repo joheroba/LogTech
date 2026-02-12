@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'LogTech - Gestión Logística',
-        short_name: 'LogTech',
-        description: 'Gestión de flota, gastos, seguridad y sensores offline.',
+        name: 'Aris - Copiloto Logístico Inteligente',
+        short_name: 'Aris',
+        description: 'Asistente de flota, seguridad y telemetría por voz.',
         theme_color: '#0f172a',
         icons: [
           {

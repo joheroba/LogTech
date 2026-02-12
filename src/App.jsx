@@ -172,8 +172,8 @@ export default function App() {
               {activeTab === 'contacts' && 'Directorio de Contactos'}
               {activeTab === 'features' && 'Escalabilidad Modular'}
               {activeTab === 'audit' && 'Auditoría del Sistema'}
-              {activeTab === 'podcast' && 'Podcast de Capacitación'}
-              {activeTab === 'insurance' && 'Certificación de Seguros'}
+              {activeTab === 'podcast' && 'Aris Audio: Capacitación'}
+              {activeTab === 'insurance' && 'Certificación de Seguros Aris'}
             </h2>
             <p className="text-slate-400 text-sm">Martes, 10 de Febrero 2026</p>
           </div>

@@ -12,41 +12,38 @@ export default function Logo({ size = 40, className = "" }) {
                 className="drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"
             >
                 {/* Fondo Stylizado */}
-                <rect width="100" height="100" rx="24" fill="url(#logo_grad)" />
+                <rect width="100" height="100" rx="24" fill="url(#aris_grad)" />
 
-                {/* Forma Abstracta: Ala / Camión Futurista */}
+                {/* Forma Abstracta: "A" Futurista / Camino */}
                 <path
-                    d="M25 35L75 35L65 65L15 65L25 35Z"
+                    d="M50 20L80 80H65L50 45L35 80H20L50 20Z"
                     fill="white"
                     fillOpacity="0.1"
                 />
-                <path
-                    d="M30 45H80L70 75H20L30 45Z"
-                    fill="white"
-                    fillOpacity="0.2"
-                />
 
-                {/* Trazo Principal "L" de LogTech */}
+                {/* Trazo Principal "A" de Aris */}
                 <path
-                    d="M35 25V75H75"
+                    d="M25 80L50 25L75 80"
                     stroke="white"
                     strokeWidth="10"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                 />
-
-                {/* Detalle Tecnológico: Líneas de Circuito */}
-                <circle cx="75" cy="75" r="5" fill="#22D3EE" />
                 <path
-                    d="M75 55V65"
+                    d="M38 60H62"
                     stroke="#22D3EE"
-                    strokeWidth="4"
+                    strokeWidth="8"
                     strokeLinecap="round"
                 />
 
+                {/* Detalle Tecnológico: Nodos de conexión */}
+                <circle cx="50" cy="25" r="4" fill="#22D3EE" />
+                <circle cx="25" cy="80" r="4" fill="#22D3EE" />
+                <circle cx="75" cy="80" r="4" fill="#22D3EE" />
+
                 <defs>
                     <linearGradient
-                        id="logo_grad"
+                        id="aris_grad"
                         x1="0"
                         y1="0"
                         x2="100"
@@ -58,8 +55,8 @@ export default function Logo({ size = 40, className = "" }) {
                     </linearGradient>
                 </defs>
             </svg>
-            <span className="text-xl font-black italic tracking-tighter text-white">
-                LOG<span className="text-cyan-400">TECH</span>
+            <span className="text-2xl font-black italic tracking-tighter text-white">
+                AR<span className="text-cyan-400">IS</span>
             </span>
         </div>
     );
