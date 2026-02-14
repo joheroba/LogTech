@@ -111,4 +111,7 @@ export async function seedDatabase() {
                 }
             ]);
         }
+    } catch (error) {
+        console.warn("La base de datos ArisDB ya estaba inicializada o falló la siembra:", error);
     }
+}
