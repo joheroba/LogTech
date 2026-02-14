@@ -251,8 +251,8 @@ function UserProfile({ collapsed }) {
       </div>
       {!collapsed && (
         <div className="flex-1 overflow-hidden">
-          <p className="text-sm font-bold truncate">Admin Usuario</p>
-          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Transervis S.A.</p>
+          <p className="text-sm font-bold truncate">Administrador</p>
+          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Empresa Configurada</p>
         </div>
       )}
       {!collapsed && (
