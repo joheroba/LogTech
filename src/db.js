@@ -15,7 +15,8 @@ db.version(1).stores({
     features: 'id, name, description, is_enabled, impact, recommendation',
     podcasts: '++id, title, content, category',
     insurance_reports: '++id, person_dni, safety_index, validated_at',
-    contributions: '++id, driver_dni, type, status'
+    contributions: '++id, driver_dni, type, status',
+    settings: 'id, key, value'
 });
 
 // Initial seed data for demonstration
@@ -109,6 +110,12 @@ export async function seedDatabase() {
                     content: 'Mantener una velocidad constante y evitar aceleraciones bruscas puede ahorrar hasta un 15% de combustible en rutas largas.',
                     category: 'Eficiencia'
                 }
+            ]);
+
+            await db.settings.bulkAdd([
+                { id: 'company_name', key: 'Nombre de la Empresa', value: 'Empresa Configurada' },
+                { id: 'company_ruc', key: 'RUC', value: '00000000000' },
+                { id: 'admin_name', key: 'Nombre del Administrador', value: 'Administrador' }
             ]);
         }
     } catch (error) {

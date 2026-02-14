@@ -8,6 +8,7 @@ import FeatureCenter from './modules/FeatureCenter';
 import PodcastModule from './modules/PodcastModule';
 import InsuranceModule from './modules/InsuranceModule';
 import InteractiveModule from './modules/InteractiveModule';
+import SettingsModule from './modules/SettingsModule';
 import Logo from './components/Logo';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -39,7 +40,9 @@ export default function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
 
   const features = useLiveQuery(() => db.features.toArray()) || [];
+  const settings = useLiveQuery(() => db.settings.toArray()) || [];
   const isFeatureEnabled = (id) => features.find(f => f.id === id)?.is_enabled;
+  const getSetting = (id, fallback) => settings.find(s => s.id === id)?.value || fallback;
 
   useEffect(() => {
     seedDatabase();
@@ -164,10 +167,21 @@ export default function App() {
               onClick={() => setActiveTab('features')}
               collapsed={!isSidebarOpen}
             />
+            <NavItem
+              icon={<Settings size={20} />}
+              label="Configuración"
+              active={activeTab === 'settings'}
+              onClick={() => setActiveTab('settings')}
+              collapsed={!isSidebarOpen}
+            />
           </nav>
 
           <div className="mt-auto pt-6 border-t border-slate-800">
-            <UserProfile collapsed={!isSidebarOpen} />
+            <UserProfile
+              collapsed={!isSidebarOpen}
+              adminName={getSetting('admin_name', 'Administrador')}
+              companyName={getSetting('company_name', 'Empresa Configurada')}
+            />
           </div>
         </div>
       </aside>
@@ -207,6 +221,7 @@ export default function App() {
           {activeTab === 'podcast' && <PodcastModule />}
           {activeTab === 'insurance' && <InsuranceModule />}
           {activeTab === 'interactive' && <InteractiveModule />}
+          {activeTab === 'settings' && <SettingsModule />}
 
           {/* Placeholder for settings / audit if not fully implemented */}
           {(activeTab === 'settings' || activeTab === 'audit') && (
@@ -243,7 +258,7 @@ function NavItem({ icon, label, active, onClick, collapsed }) {
   );
 }
 
-function UserProfile({ collapsed }) {
+function UserProfile({ collapsed, adminName, companyName }) {
   return (
     <div className="flex items-center gap-3 px-2">
       <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-800 shrink-0">
@@ -251,8 +266,8 @@ function UserProfile({ collapsed }) {
       </div>
       {!collapsed && (
         <div className="flex-1 overflow-hidden">
-          <p className="text-sm font-bold truncate">Administrador</p>
-          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Empresa Configurada</p>
+          <p className="text-sm font-bold truncate">{adminName}</p>
+          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">{companyName}</p>
         </div>
       )}
       {!collapsed && (
