@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, seedDatabase } from './db';
 import LiquidationModule from './modules/LiquidationModule';
+import DashboardModule from './modules/DashboardModule';
 import SafetyModule from './modules/SafetyModule';
 import ContactsModule from './modules/ContactsModule';
 import FeatureCenter from './modules/FeatureCenter';
