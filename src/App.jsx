@@ -218,9 +218,9 @@ export default function App() {
           {activeTab === 'safety' && <SafetyModule vehicleType={vehicleType} />}
           {activeTab === 'contacts' && <ContactsModule />}
           {activeTab === 'features' && <FeatureCenter />}
-          {activeTab === 'podcast' && <PodcastModule />}
+          {activeTab === 'podcast' && <PodcastModule onExit={() => setActiveTab('dashboard')} />}
           {activeTab === 'insurance' && <InsuranceModule />}
-          {activeTab === 'interactive' && <InteractiveModule />}
+          {activeTab === 'interactive' && <InteractiveModule onExit={() => setActiveTab('dashboard')} />}
           {activeTab === 'settings' && <SettingsModule />}
 
           {/* Placeholder for settings / audit if not fully implemented */}

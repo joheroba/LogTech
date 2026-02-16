@@ -16,7 +16,7 @@ import {
     Info
 } from 'lucide-react';
 
-export default function InteractiveModule() {
+export default function InteractiveModule({ onExit }) {
     const [activeMode, setActiveMode] = useState('trivia');
     const [isOnboarding, setIsOnboarding] = useState(true);
     const [userProfile, setUserProfile] = useState({ role: '', vehicle: '' });
@@ -26,10 +26,11 @@ export default function InteractiveModule() {
     const [isListening, setIsListening] = useState(false);
     const [isWaitingForNext, setIsWaitingForNext] = useState(false);
     const [arisActive, setArisActive] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
 
     // TTS: Aris Habla
     const speak = (text) => {
-        if (!window.speechSynthesis) return;
+        if (!window.speechSynthesis || isPaused) return;
         window.speechSynthesis.cancel();
         const msg = new SpeechSynthesisUtterance(text);
         msg.lang = 'es-ES';
@@ -122,6 +123,31 @@ export default function InteractiveModule() {
             if (result.includes("aris")) {
                 setArisActive(true);
                 setTimeout(() => setArisActive(false), 3000);
+
+                // Comandos Globales de Aris
+                if (result.includes("salir") || result.includes("cerrar") || result.includes("dashboard")) {
+                    speak("Entendido. Volviendo al panel principal.");
+                    setTimeout(() => onExit(), 1500);
+                    return;
+                }
+
+                if (result.includes("pausa") || result.includes("espera") || result.includes("detener")) {
+                    setIsPaused(true);
+                    speak("De acuerdo, hago una pausa. Di 'Aris, continúa' cuando estés listo.");
+                    return;
+                }
+
+                if (isPaused && (result.includes("continúa") || result.includes("sigue") || result.includes("listo"))) {
+                    setIsPaused(false);
+                    speak("Reanudando. ¿En qué nos quedamos?");
+                    // Forzar relectura
+                    setTimeout(() => {
+                        const q = currentQuestions[triviaStep];
+                        const optionsText = q.options.map((opt, i) => `Opción ${i + 1}: ${opt}`).join(". ");
+                        speak(`${q.q}. Las opciones son: ${optionsText}`);
+                    }, 1000);
+                    return;
+                }
 
                 if (isWaitingForNext) {
                     if (result.includes("listo") || result.includes("continuar") || result.includes("oído")) {
