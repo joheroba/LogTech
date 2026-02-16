@@ -215,7 +215,7 @@ export default function InteractiveModule({ onExit }) {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-white">Aris Interactiva</h2>
-                    <p className="text-slate-500 text-xs italic">Manos Libres: Di "Aris" seguido de "Uno", "Listo" o "Repite"</p>
+                    <p className="text-slate-500 text-xs italic">Control de Voz: Di "Aris" seguido de "Uno", "Listo", "Repite", "Pausa" o "Salir"</p>
                 </div>
                 <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-full">
                     <Gamepad2 size={24} />
