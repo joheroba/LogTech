@@ -20,7 +20,8 @@ import {
     ClipboardCheck,
     Phone,
     PhoneCall,
-    UserPlus
+    UserPlus,
+    Heart
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import VoiceButton from '../components/VoiceButton';
