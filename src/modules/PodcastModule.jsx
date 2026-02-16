@@ -9,14 +9,17 @@ import {
     Volume2,
     Headphones,
     Info,
-    Award
+    Award,
+    BrainCircuit
 } from 'lucide-react';
 
-export default function PodcastModule() {
+export default function PodcastModule({ onExit }) {
     const podcasts = useLiveQuery(() => db.podcasts.toArray()) || [];
     const [currentPodcastIndex, setCurrentPodcastIndex] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [speechInstance, setSpeechInstance] = useState(null);
+    const [isListening, setIsListening] = useState(false);
+    const [arisActive, setArisActive] = useState(false);
 
     const currentPodcast = podcasts[currentPodcastIndex];
 
@@ -56,12 +59,77 @@ export default function PodcastModule() {
         setCurrentPodcastIndex((prev) => (prev - 1 + podcasts.length) % podcasts.length);
     };
 
+    // STT: Aris Escucha (Podcast)
+    useEffect(() => {
+        if (!('webkitSpeechRecognition' in window)) return;
+        const Recognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+        const recognition = new Recognition();
+        recognition.lang = 'es-ES';
+        recognition.continuous = true;
+        recognition.interimResults = false;
+
+        recognition.onresult = (event) => {
+            const result = event.results[event.results.length - 1][0].transcript.toLowerCase();
+            console.log("Aris Audio escuchó:", result);
+
+            if (result.includes("aris")) {
+                setArisActive(true);
+                setTimeout(() => setArisActive(false), 3000);
+
+                if (result.includes("salir") || result.includes("cerrar") || result.includes("dashboard")) {
+                    window.speechSynthesis.cancel();
+                    onExit();
+                    return;
+                }
+
+                if (result.includes("pausa") || result.includes("detener") || result.includes("espera")) {
+                    if (isPlaying) togglePlay();
+                    return;
+                }
+
+                if (result.includes("continúa") || result.includes("sigue") || result.includes("reproduce") || result.includes("play")) {
+                    if (!isPlaying) togglePlay();
+                    return;
+                }
+
+                if (result.includes("siguiente") || result.includes("adelanta")) {
+                    nextPodcast();
+                    return;
+                }
+
+                if (result.includes("anterior") || result.includes("atrás")) {
+                    prevPodcast();
+                    return;
+                }
+
+                if (result.includes("repite") || result.includes("otra vez")) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(currentPodcast.content);
+                    utterance.lang = 'es-ES';
+                    utterance.onend = () => setIsPlaying(false);
+                    window.speechSynthesis.speak(utterance);
+                    setIsPlaying(true);
+                    return;
+                }
+            }
+        };
+
+        recognition.onstart = () => setIsListening(true);
+        recognition.onend = () => recognition.start(); // Mantener escucha activa
+
+        recognition.start();
+        return () => {
+            recognition.onend = null;
+            recognition.stop();
+        };
+    }, [isPlaying, currentPodcastIndex, podcasts]);
+
     return (
         <div className="flex flex-col gap-6 animate-fade-in">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-white">Aris Audio: Micro-Podcast</h2>
-                    <p className="text-slate-500 text-sm italic">Capacitación manos libres con tu copiloto virtual.</p>
+                    <p className="text-slate-500 text-xs italic">Manos Libres: Di "Aris" seguido de "Pausa", "Siguiente" o "Salir"</p>
                 </div>
                 <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-full">
                     <Headphones size={24} />
@@ -104,6 +172,13 @@ export default function PodcastModule() {
                         <SkipForward size={32} />
                     </button>
                 </div>
+
+                {arisActive && (
+                    <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 animate-pulse">
+                        <BrainCircuit size={16} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Aris te escucha...</span>
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
