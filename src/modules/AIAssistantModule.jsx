@@ -58,6 +58,8 @@ export default function AIAssistantModule({ onExit, onNavigate }) {
                 pitch = "Mucho gusto, soy Aris. Opero al cien por ciento sin conexión para proteger la vida en las rutas mineras más exigentes. Mi núcleo en Rust detecta fatiga y distracciones proactivamente. Además, cada segundo de mi telemetría está firmado digitalmente con SHA-256, garantizando evidencias inalterables para sus auditorías de seguridad y cumplimiento. Soy el estándar de transparencia que su operación crítica merece.";
             } else if (cmd.includes('logístico')) {
                 pitch = "Soy Aris, su copiloto inteligente. Maximizo la rentabilidad de su flota reduciendo el consumo de combustible en un 8 por ciento y automatizando la liquidación de gastos por voz. Acompaño al conductor en cada kilómetro, educándolo y premiando su prevención mediante tokens canjeables. Conmigo, la logística no solo es más rápida, es financieramente más inteligente.";
+            } else if (cmd.includes('academia') || cmd.includes('institución') || cmd.includes('educativo')) {
+                pitch = "Es un honor presentarme. Soy Aris, el ecosistema de inteligencia de LogTech. Mi propósito es cerrar la brecha entre la formación académica y la realidad en ruta. Ofrezco a instituciones como la suya un laboratorio de datos en tiempo real, permitiendo certificar a los conductores basándose en su desempeño técnico y ético diario. Con mi sistema de Certificación Dual, no solo formamos conductores, sino especialistas avalados por el prestigio de su academia y la precisión de mi tecnología. Juntos, elevamos el estándar educacional del transporte en el Perú.";
             }
             response = pitch; // Set the pitch as the assistant's response
         }
@@ -76,6 +78,21 @@ export default function AIAssistantModule({ onExit, onNavigate }) {
         }
         else if (cmd.includes("error") || cmd.includes("falsa alarma") || cmd.includes("apelar")) {
             response = "Entiendo la preocupación. Si el sistema detecta un evento, el conductor puede grabar su descargo de inmediato. Nuestra IA de Auditoría analiza el audio y el contexto para descartar falsos positivos, y el Delegado de la empresa tiene la última palabra basándose en evidencias inalterables.";
+        }
+        else if (cmd.includes("validan") || cmd.includes("estándar") || cmd.includes("pedagógico")) {
+            response = "Trabajamos bajo la supervisión de la academia para asegurar que cada lección y trivia cumpla con el estándar pedagógico institucional. No solo enseñamos, certificamos bajo su aval.";
+        }
+        else if (cmd.includes("qué datos") || cmd.includes("analítica") || cmd.includes("brecha")) {
+            response = "La academia recibe analíticas agregadas sobre brechas de conocimiento, permitiéndoles identificar exactamente qué temas necesitan refuerzo en la flota y crear programas presenciales altamente efectivos basados en evidencia real.";
+        }
+        else if (cmd.includes("metodología") || cmd.includes("enseñanza") || cmd.includes("pedagogía")) {
+            response = "Nuestra metodología se basa en el micro-learning adaptativo y la andragogía. Entregamos cápsulas de conocimiento justo en el momento de necesidad, reforzando conceptos mediante trivias dinámicas que aseguran una retención del 80% superior a los métodos tradicionales.";
+        }
+        else if (cmd.includes("carga cognitiva") || cmd.includes("atención") || cmd.includes("distraer")) {
+            response = "La seguridad es lo primero. He diseñado mis lecciones para que duren menos de tres minutos, minimizando la carga cognitiva. El aprendizaje ocurre en momentos de baja exigencia operativa y siempre bajo control de voz, garantizando que el conductor nunca pierda la atención en la ruta.";
+        }
+        else if (cmd.includes("validez") || cmd.includes("evaluación") || cmd.includes("examen")) {
+            response = "La validez de nuestras evaluaciones está garantizada por un banco de preguntas aleatorio y dinámico, supervisado por expertos. No solo medimos memoria, sino la aplicación práctica de protocolos de seguridad en situaciones simuladas por voz.";
         }
         // 2. Consultas de Datos (Dummies por ahora, conectables a db.js)
         else if (cmd.includes("score") || cmd.includes("puntaje") || cmd.includes("mi desempeño")) {
@@ -192,6 +209,12 @@ export default function AIAssistantModule({ onExit, onNavigate }) {
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 text-blue-400 rounded-full text-[10px] font-bold border border-blue-500/20 hover:bg-blue-600/30 transition-all uppercase tracking-wider"
                     >
                         <Presentation size={12} /> Pitch Logística
+                    </button>
+                    <button
+                        onClick={() => handleCommand('Aris, preséntate al Director Académico')}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600/20 text-emerald-400 rounded-full text-[10px] font-bold border border-emerald-500/20 hover:bg-emerald-600/30 transition-all uppercase tracking-wider"
+                    >
+                        <Presentation size={12} /> Pitch Academia
                     </button>
                 </div>
                 <div className="relative">

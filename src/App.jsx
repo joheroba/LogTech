@@ -14,6 +14,8 @@ import NavigationModule from './modules/NavigationModule';
 import FleetModule from './modules/FleetModule';
 import AuditorModule from './modules/AuditorModule';
 import MarketplaceModule from './modules/MarketplaceModule';
+import ArisAcademyModule from './modules/ArisAcademyModule';
+import AdminEducationModule from './modules/AdminEducationModule';
 import Logo from './components/Logo';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -31,7 +33,7 @@ import {
   Phone,
   Wifi,
   WifiOff,
-  Headphones,
+  GraduationCap,
   ShieldCheck,
   Gamepad2,
   Sparkles,
@@ -134,22 +136,13 @@ export default function App() {
               onClick={() => setActiveTab('safety')}
               collapsed={!isSidebarOpen}
             />
-            {isFeatureEnabled('podcast_edu') && (
-              <NavItem
-                icon={<Headphones size={20} />}
-                label="Capsulas Audio"
-                active={activeTab === 'podcast'}
-                onClick={() => setActiveTab('podcast')}
-                collapsed={!isSidebarOpen}
-              />
-            )}
             {isFeatureEnabled('gamification') && (
               <>
                 <NavItem
-                  icon={<Gamepad2 size={20} />}
-                  label="Aris Interactiva"
-                  active={activeTab === 'interactive'}
-                  onClick={() => setActiveTab('interactive')}
+                  icon={<GraduationCap size={20} />}
+                  label="Aris Academy"
+                  active={activeTab === 'academy'}
+                  onClick={() => setActiveTab('academy')}
                   collapsed={!isSidebarOpen}
                 />
                 <NavItem
@@ -160,6 +153,42 @@ export default function App() {
                   collapsed={!isSidebarOpen}
                 />
               </>
+            )}
+            {isFeatureEnabled('fms') && (
+              <>
+                <div className="h-px bg-slate-800 my-4 mx-4"></div>
+                <div className="px-4 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest hidden lg:block">Administración</div>
+                <NavItem
+                  icon={<ShieldCheck size={20} />}
+                  label="Auditoría Ética"
+                  active={activeTab === 'audit'}
+                  onClick={() => setActiveTab('audit')}
+                  collapsed={!isSidebarOpen}
+                />
+                <NavItem
+                  icon={<Users size={20} />}
+                  label="Analítica Academy"
+                  active={activeTab === 'admin_edu'}
+                  onClick={() => setActiveTab('admin_edu')}
+                  collapsed={!isSidebarOpen}
+                />
+                <NavItem
+                  icon={<Truck size={20} />}
+                  label="Gestión de Flota"
+                  active={activeTab === 'fms'}
+                  onClick={() => setActiveTab('fms')}
+                  collapsed={!isSidebarOpen}
+                />
+              </>
+            )}
+            {isFeatureEnabled('auditor') && (
+              <NavItem
+                icon={<Database size={20} />}
+                label="Auditoría"
+                active={activeTab === 'audit'}
+                onClick={() => setActiveTab('audit')}
+                collapsed={!isSidebarOpen}
+              />
             )}
             {isSidebarOpen && <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2 mt-4 mb-2">Administración</p>}
             <NavItem
@@ -240,9 +269,8 @@ export default function App() {
               {activeTab === 'contacts' && 'Directorio de Contactos'}
               {activeTab === 'features' && 'Escalabilidad Modular'}
               {activeTab === 'audit' && 'Auditoría del Sistema'}
-              {activeTab === 'podcast' && 'Aris Audio: Capacitación'}
-              {activeTab === 'insurance' && 'Certificación de Seguros Aris'}
-              {activeTab === 'interactive' && 'Aris Interactiva'}
+              {activeTab === 'admin_edu' && 'Analítica Educativa Administrativa'}
+              {activeTab === 'academy' && 'Aris Academy'}
               {activeTab === 'marketplace' && 'Marketplace de Beneficios'}
               {activeTab === 'assistant' && 'Centro de Control IA'}
               {activeTab === 'navigation' && 'Aris Way: Navegación Logística'}
@@ -266,9 +294,9 @@ export default function App() {
           {activeTab === 'safety' && <SafetyModule vehicleType={vehicleType} />}
           {activeTab === 'contacts' && <ContactsModule />}
           {activeTab === 'features' && <FeatureCenter />}
-          {activeTab === 'podcast' && <PodcastModule onExit={() => setActiveTab('dashboard')} />}
           {activeTab === 'insurance' && <InsuranceModule />}
-          {activeTab === 'interactive' && <InteractiveModule onExit={() => setActiveTab('dashboard')} />}
+          {activeTab === 'academy' && <ArisAcademyModule />}
+          {activeTab === 'admin_edu' && <AdminEducationModule />}
           {activeTab === 'marketplace' && <MarketplaceModule />}
           {activeTab === 'settings' && <SettingsModule />}
           {activeTab === 'audit' && <AuditorModule />}
