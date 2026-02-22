@@ -13,13 +13,16 @@ import {
 
 export default function InsuranceModule() {
     const sensorLogs = useLiveQuery(() => db.sensorLogs.toArray()) || [];
+    const triviaProgress = useLiveQuery(() => db.podcasts_progress.where('status').equals('completado').toArray()) || [];
 
-    // Lógica de cálculo de score de seguridad simplificada
-    const totalAlerts = sensorLogs.length;
-    const criticalEvents = sensorLogs.filter(log => ['Giro Brusco', 'Frenado Brusco', 'Fatiga'].includes(log.road_event)).length;
+    // Lógica de cálculo Pro: Penalización por eventos + Bono por Capacitación
+    const criticalEvents = sensorLogs.filter(log =>
+        ['Giro Brusco', 'Frenado Brusco', 'Fatiga', 'Celular'].includes(log.road_event)
+    ).length;
 
-    const rawScore = 100 - (criticalEvents * 5);
-    const safetyScore = Math.max(0, Math.min(100, rawScore));
+    const triviaBonus = Math.min(10, triviaProgress.length * 2); // Hasta 10 puntos de bono por aprender
+    const rawScore = 100 - (criticalEvents * 3) + triviaBonus;
+    const safetyScore = Math.max(0, Math.min(100, Math.round(rawScore)));
 
     const getStatusColor = (score) => {
         if (score >= 85) return 'text-emerald-400';
@@ -31,10 +34,13 @@ export default function InsuranceModule() {
         <div className="flex flex-col gap-6 animate-fade-in">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-white">Certificación para Seguros</h2>
-                    <p className="text-slate-500 text-sm">Valida tu historial de conducción para reducir primas.</p>
+                    <h2 className="text-2xl font-bold tracking-tight text-white">Certificación Rímac Seguros</h2>
+                    <p className="text-slate-500 text-sm">Validación técnica para pólizas de flota Transervis.</p>
                 </div>
-                <ShieldCheck size={32} className="text-blue-500" />
+                <div className="flex flex-col items-end">
+                    <ShieldCheck size={32} className="text-red-500" />
+                    <span className="text-[8px] font-black text-red-500 uppercase tracking-tighter mt-1">Socio Estratégico</span>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -102,29 +108,32 @@ export default function InsuranceModule() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-2xl">
-                            <TrendingUp className="text-emerald-500 mb-2" />
-                            <h4 className="text-sm font-bold text-emerald-400">Ahorro Estimado</h4>
-                            <p className="text-2xl font-black text-white">$120.00 / mes</p>
-                            <p className="text-[10px] text-emerald-500/70 font-medium">Basado en tu Safety Score actual.</p>
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-2xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-2 opacity-10">
+                                <TrendingUp size={48} />
+                            </div>
+                            <h4 className="text-sm font-bold text-emerald-400">Descuento Proyectado Rímac</h4>
+                            <p className="text-2xl font-black text-white">$145.50 / mes</p>
+                            <p className="text-[10px] text-emerald-500/70 font-medium tracking-wide">
+                                {triviaBonus > 0 ? `Bono de capacitación (+${triviaBonus} pts) aplicado.` : 'Capacítate para aumentar tu descuento.'}
+                            </p>
                         </div>
-                        <button className="bg-blue-600 hover:bg-blue-500 text-white p-6 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all shadow-lg active:scale-95 group">
-                            <Download className="group-hover:bounce" />
-                            <span className="font-bold text-sm">Descargar Reporte Certificado</span>
-                            <span className="text-[10px] opacity-70">Formato PDF firmado digitalmente</span>
+                        <button className="bg-red-600 hover:bg-red-500 text-white p-6 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all shadow-lg active:scale-95 group border border-red-400/30">
+                            <Download className="group-hover:animate-bounce" />
+                            <span className="font-bold text-sm">Descargar Reporte Rímac</span>
+                            <span className="text-[10px] opacity-70">PDF con Firma Digital Aris Ethics</span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="glass-card p-6 bg-slate-900/30 border-dashed">
+            <div className="glass-card p-6 bg-slate-900/30 border-dashed border-red-500/20">
                 <div className="flex items-start gap-4">
-                    <AlertTriangle className="text-amber-500 shrink-0 mt-1" />
+                    <AlertTriangle className="text-red-500 shrink-0 mt-1" />
                     <div className="space-y-1">
-                        <h4 className="text-sm font-bold">Nota de Privacidad y Monetización</h4>
+                        <h4 className="text-sm font-bold">Convenio de Privacidad Rímac - LogTech</h4>
                         <p className="text-xs text-slate-500 leading-relaxed">
-                            Tus datos de telemetría solo se comparten con aseguradoras afiliadas si tú o tu administrador lo autoriza.
-                            Mantener un score alto te permite acceder a beneficios de marketplace y descuentos exclusivos en repuestos Transervis S.A.
+                            Certificado emitido bajo los estándares de **Safety Analytics** de Aris. Este documento tiene validez legal para la renegociación de primas de flota ante **Rímac Seguros y Reaseguros**, siempre que el hash de integridad SHA-256 sea validado en el portal de Aris Ethics.
                         </p>
                     </div>
                 </div>

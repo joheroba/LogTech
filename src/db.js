@@ -14,8 +14,10 @@ db.version(1).stores({
     contacts: '++id, name, phone, type, is_synced',
     features: 'id, name, description, is_enabled, impact, recommendation',
     podcasts: '++id, title, content, category',
+    podcasts_progress: '++id, podcast_id, person_dni, status, completed_at',
     insurance_reports: '++id, person_dni, safety_index, validated_at',
     contributions: '++id, driver_dni, type, status',
+    assignments: '++id, vehicle_id, driver_dni, helper_dni, status',
     settings: 'id, key, value'
 });
 
@@ -109,6 +111,21 @@ export async function seedDatabase() {
                     title: 'Optimización de Combustible',
                     content: 'Mantener una velocidad constante y evitar aceleraciones bruscas puede ahorrar hasta un 15% de combustible en rutas largas.',
                     category: 'Eficiencia'
+                },
+                {
+                    title: 'Tutorial: Comandos de Voz Aris',
+                    content: 'Para hablar conmigo, solo di mi nombre seguido de una acción. Por ejemplo: Aris, pausa, o Aris, siguiente. También puedes pedirme que liquide gastos diciendo Aris, liquidar.',
+                    category: 'Uso de App'
+                },
+                {
+                    title: 'Normativa MTC: Jornada de Manejo',
+                    content: 'Según el Reglamento Nacional de Administración de Transportes, el tiempo máximo de conducción continua no debe exceder las 5 horas de día o 4 horas de noche. Es obligatorio realizar pausas de descanso.',
+                    category: 'Normatividad'
+                },
+                {
+                    title: 'RNT: Carriles de Circulación',
+                    content: 'Los vehículos de carga deben circular siempre por el carril derecho. El carril izquierdo se utiliza exclusivamente para adelantar, manteniendo siempre la seguridad vial.',
+                    category: 'Normatividad'
                 }
             ]);
 

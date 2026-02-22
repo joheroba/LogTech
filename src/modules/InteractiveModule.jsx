@@ -15,6 +15,7 @@ import {
     User,
     Info
 } from 'lucide-react';
+import useArisVoice from '../hooks/useArisVoice';
 
 export default function InteractiveModule({ onExit }) {
     const [activeMode, setActiveMode] = useState('trivia');
@@ -27,15 +28,27 @@ export default function InteractiveModule({ onExit }) {
     const [isWaitingForNext, setIsWaitingForNext] = useState(false);
     const [arisActive, setArisActive] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
+    const [triviaStep, setTriviaStep] = useState(0);
 
-    // TTS: Aris Habla
+    // Motor de Voz Neural Offline (Aris Voice)
+    const { speak: arisSpeak, stop: arisStop, isReady } = useArisVoice();
+
+    // TTS: Aris Habla (Wrapper con fallback)
     const speak = (text) => {
-        if (!window.speechSynthesis || isPaused) return;
-        window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'es-ES';
-        msg.rate = 0.9; // Un poco más lento para claridad
-        window.speechSynthesis.speak(msg);
+        if (isPaused) return;
+
+        // Prioridad: Motor Neural Offline
+        if (isReady) {
+            arisSpeak(text);
+        } else {
+            // Fallback: TTS Nativo mientras carga el motor o si no hay modelo
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'es-ES';
+            msg.rate = 0.9;
+            window.speechSynthesis.speak(msg);
+        }
     };
 
     // Trivias segmentadas
@@ -188,11 +201,7 @@ export default function InteractiveModule({ onExit }) {
 
     const startRecording = () => {
         setIsRecording(true);
-        if (window.speechSynthesis) {
-            const msg = new SpeechSynthesisUtterance("Te escucho. Cuéntame tu anécdota.");
-            msg.lang = 'es-ES';
-            window.speechSynthesis.speak(msg);
-        }
+        speak("Te escucho. Cuéntame tu anécdota.");
     };
 
     const stopRecording = async () => {
@@ -203,11 +212,7 @@ export default function InteractiveModule({ onExit }) {
             status: 'Pendiente',
             timestamp: new Date()
         });
-        if (window.speechSynthesis) {
-            const msg = new SpeechSynthesisUtterance("Gracias. Enviaré tu anécdota al administrador.");
-            msg.lang = 'es-ES';
-            window.speechSynthesis.speak(msg);
-        }
+        speak("Gracias. Enviaré tu anécdota al administrador.");
     };
 
     return (

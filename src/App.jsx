@@ -9,6 +9,11 @@ import PodcastModule from './modules/PodcastModule';
 import InsuranceModule from './modules/InsuranceModule';
 import InteractiveModule from './modules/InteractiveModule';
 import SettingsModule from './modules/SettingsModule';
+import AIAssistantModule from './modules/AIAssistantModule';
+import NavigationModule from './modules/NavigationModule';
+import FleetModule from './modules/FleetModule';
+import AuditorModule from './modules/AuditorModule';
+import MarketplaceModule from './modules/MarketplaceModule';
 import Logo from './components/Logo';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -28,7 +33,11 @@ import {
   WifiOff,
   Headphones,
   ShieldCheck,
-  Gamepad2
+  Gamepad2,
+  Sparkles,
+  Brain,
+  Navigation,
+  ShoppingCart
 } from 'lucide-react';
 import './index.css';
 
@@ -104,6 +113,14 @@ export default function App() {
               collapsed={!isSidebarOpen}
             />
             <NavItem
+              icon={<Navigation size={20} />}
+              label="Aris Way"
+              active={activeTab === 'navigation'}
+              onClick={() => setActiveTab('navigation')}
+              collapsed={!isSidebarOpen}
+              highlight
+            />
+            <NavItem
               icon={<Wallet size={20} />}
               label="Liquidación"
               active={activeTab === 'finance'}
@@ -127,14 +144,31 @@ export default function App() {
               />
             )}
             {isFeatureEnabled('gamification') && (
-              <NavItem
-                icon={<Gamepad2 size={20} />}
-                label="Aris Interactiva"
-                active={activeTab === 'interactive'}
-                onClick={() => setActiveTab('interactive')}
-                collapsed={!isSidebarOpen}
-              />
+              <>
+                <NavItem
+                  icon={<Gamepad2 size={20} />}
+                  label="Aris Interactiva"
+                  active={activeTab === 'interactive'}
+                  onClick={() => setActiveTab('interactive')}
+                  collapsed={!isSidebarOpen}
+                />
+                <NavItem
+                  icon={<ShoppingCart size={20} />}
+                  label="Marketplace"
+                  active={activeTab === 'marketplace'}
+                  onClick={() => setActiveTab('marketplace')}
+                  collapsed={!isSidebarOpen}
+                />
+              </>
             )}
+            {isSidebarOpen && <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2 mt-4 mb-2">Administración</p>}
+            <NavItem
+              icon={<Truck size={20} />}
+              label="Gestión de Flota"
+              active={activeTab === 'fleet'}
+              onClick={() => setActiveTab('fleet')}
+              collapsed={!isSidebarOpen}
+            />
             <NavItem
               icon={<Phone size={20} />}
               label="Directorio"
@@ -160,6 +194,14 @@ export default function App() {
                 collapsed={!isSidebarOpen}
               />
             )}
+            <NavItem
+              icon={<Sparkles size={20} />}
+              label="Asistente Aris"
+              active={activeTab === 'assistant'}
+              onClick={() => setActiveTab('assistant')}
+              collapsed={!isSidebarOpen}
+              highlight
+            />
             <NavItem
               icon={<Settings size={20} />}
               label="Escalabilidad"
@@ -201,6 +243,10 @@ export default function App() {
               {activeTab === 'podcast' && 'Aris Audio: Capacitación'}
               {activeTab === 'insurance' && 'Certificación de Seguros Aris'}
               {activeTab === 'interactive' && 'Aris Interactiva'}
+              {activeTab === 'marketplace' && 'Marketplace de Beneficios'}
+              {activeTab === 'assistant' && 'Centro de Control IA'}
+              {activeTab === 'navigation' && 'Aris Way: Navegación Logística'}
+              {activeTab === 'fleet' && 'Gestión de Flota y Tripulación'}
             </h2>
             <p className="text-slate-400 text-sm">Martes, 10 de Febrero 2026</p>
           </div>
@@ -214,6 +260,8 @@ export default function App() {
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 pt-4">
           {activeTab === 'dashboard' && <DashboardModule role={userRole} vehicleType={vehicleType} />}
+          {activeTab === 'navigation' && <NavigationModule />}
+          {activeTab === 'fleet' && <FleetModule />}
           {activeTab === 'finance' && <LiquidationModule />}
           {activeTab === 'safety' && <SafetyModule vehicleType={vehicleType} />}
           {activeTab === 'contacts' && <ContactsModule />}
@@ -221,10 +269,18 @@ export default function App() {
           {activeTab === 'podcast' && <PodcastModule onExit={() => setActiveTab('dashboard')} />}
           {activeTab === 'insurance' && <InsuranceModule />}
           {activeTab === 'interactive' && <InteractiveModule onExit={() => setActiveTab('dashboard')} />}
+          {activeTab === 'marketplace' && <MarketplaceModule />}
           {activeTab === 'settings' && <SettingsModule />}
+          {activeTab === 'audit' && <AuditorModule />}
+          {activeTab === 'assistant' && (
+            <AIAssistantModule
+              onExit={() => setActiveTab('dashboard')}
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
 
           {/* Placeholder for settings / audit if not fully implemented */}
-          {(activeTab === 'settings' || activeTab === 'audit') && (
+          {(activeTab === 'settings') && (
             <div className="glass-card p-12 flex flex-col items-center justify-center text-center opacity-50">
               <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
                 <Settings className="animate-spin-slow" />
@@ -239,19 +295,21 @@ export default function App() {
   );
 }
 
-function NavItem({ icon, label, active, onClick, collapsed }) {
+function NavItem({ icon, label, active, onClick, collapsed, highlight }) {
   return (
     <button
       onClick={onClick}
       className={`flex items-center w-full px-4 py-3 rounded-xl transition-all duration-200 group ${active
         ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20'
-        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+        : highlight
+          ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-500/10 hover:bg-indigo-600/20'
+          : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
         }`}
       title={collapsed ? label : ""}
     >
       <div className="flex items-center gap-3">
         {icon}
-        {!collapsed && <span className="font-medium text-sm">{label}</span>}
+        {!collapsed && <span className={`font-medium text-sm ${highlight && 'text-indigo-300'}`}>{label}</span>}
       </div>
       {!collapsed && active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_white]"></div>}
     </button>

@@ -11,9 +11,16 @@ import {
     AlertCircle,
     Truck,
     CreditCard,
-    MapPin
+    MapPin,
+    Camera,
+    Image as ImageIcon,
+    Fuel,
+    Utensils,
+    MoreHorizontal,
+    FileText
 } from 'lucide-react';
 import VoiceButton from '../components/VoiceButton';
+import useArisVoice from '../hooks/useArisVoice';
 
 export default function LiquidationModule() {
     const [showForm, setShowForm] = useState(false);
@@ -22,8 +29,12 @@ export default function LiquidationModule() {
         category: 'Peaje',
         amount: '',
         description: '',
-        vehicle_plate: 'ABC-123' // Default for demo
+        vehicle_plate: 'ABC-123',
+        photo: null // Base64 de la foto del comprobante
     });
+
+    const { speak: arisSpeak } = useArisVoice();
+    const latestAssignment = useLiveQuery(() => db.assignments.orderBy('id').last());
 
     const expenses = useLiveQuery(() => db.expenses.reverse().toArray()) || [];
 
@@ -37,6 +48,7 @@ export default function LiquidationModule() {
         await db.expenses.add({
             ...formData,
             amount: parseFloat(formData.amount),
+            assignment_id: latestAssignment?.id || null,
             is_synced: 0,
             timestamp: Date.now()
         });
@@ -44,9 +56,23 @@ export default function LiquidationModule() {
         setFormData({
             ...formData,
             amount: '',
-            description: ''
+            description: '',
+            photo: null
         });
         setShowForm(false);
+    };
+
+    const handlePhotoCapture = () => {
+        // Simulación de captura de cámara
+        const mockPhoto = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+        setFormData({ ...formData, photo: mockPhoto });
+        arisSpeak("Comprobante capturado correctamente. Procesando imagen con IA.");
+    };
+
+    const handleCloseLiquidation = () => {
+        const remaining = initialBudget - totalAmount;
+        const message = `Aris dice: Has completado tu registro de gastos. Has utilizado S/ ${totalAmount.toFixed(2)} de un fondo de S/ ${initialBudget.toFixed(2)}. Te queda un saldo de S/ ${remaining.toFixed(2)} para el retorno. Buen trabajo.`;
+        arisSpeak(message);
     };
 
     const deleteExpense = async (id) => {
@@ -82,6 +108,13 @@ export default function LiquidationModule() {
                 >
                     <Plus size={18} />
                     Nuevo Gasto
+                </button>
+                <button
+                    onClick={handleCloseLiquidation}
+                    className="btn-secondary flex items-center gap-2 border-emerald-500/30 text-emerald-400"
+                >
+                    <FileText size={18} />
+                    Cerrar Liquidación
                 </button>
             </div>
 
@@ -138,6 +171,27 @@ export default function LiquidationModule() {
                                     <VoiceButton onResult={(text) => setFormData({ ...formData, description: text })} />
                                 </div>
                             </div>
+
+                            <div>
+                                <label className="text-xs text-slate-400 block mb-2">Comprobante / Foto</label>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handlePhotoCapture}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-dashed transition-all ${formData.photo ? 'border-emerald-500/50 bg-emerald-500/5 text-emerald-400' : 'border-slate-700 bg-slate-800/50 text-slate-500 hover:border-slate-500'
+                                            }`}
+                                    >
+                                        {formData.photo ? <CheckCircle size={18} /> : <Camera size={18} />}
+                                        <span className="text-xs font-bold">{formData.photo ? 'Foto Lista' : 'Capturar Recibo'}</span>
+                                    </button>
+                                    {formData.photo && (
+                                        <div className="w-12 h-12 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
+                                            <img src={formData.photo} alt="Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <button type="submit" className="btn-primary w-full justify-center mt-2">
                                 <Save size={18} />
                                 Guardar Localmente
@@ -170,7 +224,10 @@ export default function LiquidationModule() {
                                     </div>
                                     <div>
                                         <h5 className="font-semibold text-sm">{exp.description}</h5>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold">{exp.category} • {exp.date}</p>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold">
+                                            {exp.category} • {exp.date}
+                                            {exp.photo && <span className="ml-2 text-cyan-400">📷 Foto Incluida</span>}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-6">
