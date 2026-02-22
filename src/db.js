@@ -139,3 +139,36 @@ export async function seedDatabase() {
         console.warn("La base de datos ArisDB ya estaba inicializada o falló la siembra:", error);
     }
 }
+
+// Datos específicos para el "Modo Demo" exigente
+export async function seedDemoData() {
+    try {
+        // Asegurar que existan algunos registros de telemetría previos para las analíticas
+        const logCount = await db.sensorLogs.count();
+        if (logCount < 5) {
+            await db.sensorLogs.bulkAdd([
+                { timestamp: Date.now() - 3600000, road_event: 'Frenado Brusco', intensity: '12.5', is_synced: 1 },
+                { timestamp: Date.now() - 7200000, road_event: 'Giro Brusco', intensity: '8.2', is_synced: 1 },
+                { timestamp: Date.now() - 10800000, road_event: 'Bache Fuerte', intensity: '15.1', is_synced: 1 }
+            ]);
+        }
+
+        // Configurar empresa demo
+        await db.settings.put({ id: 'company_name', key: 'Nombre de la Empresa', value: 'LogTech Field Test Unit' });
+        await db.settings.put({ id: 'admin_name', key: 'Nombre del Administrador', value: 'Aris Explorer' });
+
+        // Asignación activa
+        await db.assignments.put({
+            id: 1,
+            vehicle_id: 1,
+            driver_dni: '12345678',
+            helper_dni: '87654321',
+            status: 'activa',
+            load_type: 'Peligrosa'
+        });
+
+        console.log("📊 Demo Data Seeded for Field Test");
+    } catch (error) {
+        console.error("Error seeding demo data:", error);
+    }
+}

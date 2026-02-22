@@ -16,6 +16,7 @@ import AuditorModule from './modules/AuditorModule';
 import MarketplaceModule from './modules/MarketplaceModule';
 import ArisAcademyModule from './modules/ArisAcademyModule';
 import AdminEducationModule from './modules/AdminEducationModule';
+import LoginModule from './modules/LoginModule';
 import Logo from './components/Logo';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -49,6 +50,8 @@ export default function App() {
   const [userRole, setUserRole] = useState('admin');
   const [vehicleType, setVehicleType] = useState('truck');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const features = useLiveQuery(() => db.features.toArray()) || [];
   const settings = useLiveQuery(() => db.settings.toArray()) || [];
@@ -56,7 +59,6 @@ export default function App() {
   const getSetting = (id, fallback) => settings.find(s => s.id === id)?.value || fallback;
 
   useEffect(() => {
-    seedDatabase();
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -68,6 +70,26 @@ export default function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  const handleLogin = async (userData) => {
+    await seedDatabase();
+    if (userData.isDemo) {
+      const { seedDemoData } = await import('./db');
+      await seedDemoData();
+    }
+    setCurrentUser(userData);
+    setIsAuthenticated(true);
+    setUserRole(userData.role === 'admin' ? 'admin' : 'driver');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
+
+  if (!isAuthenticated) {
+    return <LoginModule onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#0f172a] text-white overflow-hidden">
@@ -250,8 +272,9 @@ export default function App() {
           <div className="mt-auto pt-6 border-t border-slate-800">
             <UserProfile
               collapsed={!isSidebarOpen}
-              adminName={getSetting('admin_name', 'Administrador')}
-              companyName={getSetting('company_name', 'Empresa Configurada')}
+              adminName={currentUser?.name || getSetting('admin_name', 'Administrador')}
+              companyName={currentUser?.company || getSetting('company_name', 'Empresa Configurada')}
+              onLogout={handleLogout}
             />
           </div>
         </div>
@@ -357,7 +380,10 @@ function UserProfile({ collapsed, adminName, companyName }) {
         </div>
       )}
       {!collapsed && (
-        <button className="text-slate-500 hover:text-red-400 transition-colors">
+        <button
+          onClick={onLogout}
+          className="text-slate-500 hover:text-red-400 transition-colors"
+        >
           <LogOut size={18} />
         </button>
       )}
