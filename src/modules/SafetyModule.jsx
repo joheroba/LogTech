@@ -176,476 +176,480 @@ export default function SafetyModule({ vehicleType = 'moto' }) {
             const bufferLength = analyserRef.current.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
 
-            // 🦀 Análisis Acústico Avanzado con Rust
-            if (isRustReady) {
-                const acousticReportJson = analyze_acoustic(dataArray.map(v => (v / 128.0) - 1.0));
-                const acousticReport = JSON.parse(acousticReportJson);
+            const analyze = () => {
+                if (!analyserRef.current) return;
+                analyserRef.current.getByteFrequencyData(dataArray);
 
-                if (acousticReport.impact_likelihood > 0.7) {
-                    logRoadEvent('Impacto Acústico Detectado', acousticReport.level_db);
+                // 🦀 Análisis Acústico Avanzado con Rust
+                if (isRustReady) {
+                    const acousticReportJson = analyze_acoustic(dataArray.map(v => (v / 128.0) - 1.0));
+                    const acousticReport = JSON.parse(acousticReportJson);
+
+                    if (acousticReport.impact_likelihood > 0.7) {
+                        logRoadEvent('Impacto Acústico Detectado', acousticReport.level_db);
+                    }
+                    setNoiseLevel(Math.floor(acousticReport.level_db));
                 }
-            }
-
-            requestAnimationFrame(analyze);
-        };
-        analyze();
-    } catch (err) {
-        console.error("Error de audio:", err);
-    }
-};
-
-// 4. Reconocimiento de Comandos de Voz ("Llamar a...")
-const startVoiceCommands = () => {
-    if (!('webkitSpeechRecognition' in window)) return;
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new Recognition();
-    recognition.lang = 'es-ES';
-    recognition.continuous = true;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => setIsCommandListening(true);
-    recognition.onresult = (event) => {
-        const last = event.results.length - 1;
-        const text = event.results[last][0].transcript.toLowerCase();
-
-        if (text.includes('aris apelar') || text.includes('apelar')) {
-            startAppealingProcess();
-        } else if (text.includes('llamar a')) {
-            const contactName = text.split('llamar a')[1].trim();
-            const contact = contacts.find(c => c.name.toLowerCase().includes(contactName));
-
-            if (contact) {
-                if (isReady) {
-                    arisSpeak(`Llamando a ${contact.name}`);
-                } else {
-                    const synth = window.speechSynthesis;
-                    const utter = new SpeechSynthesisUtterance(`Llamando a ${contact.name}`);
-                    utter.lang = 'es-ES';
-                    synth.speak(utter);
-                }
-
-                setTimeout(() => {
-                    window.location.href = `tel:${contact.phone}`;
-                }, 1500);
-            } else {
-                if (isReady) {
-                    arisSpeak("No encontré ese contacto en el directorio.");
-                } else {
-                    const synth = window.speechSynthesis;
-                    const utter = new SpeechSynthesisUtterance("No encontré ese contacto en el directorio.");
-                    utter.lang = 'es-ES';
-                    synth.speak(utter);
-                }
-            }
-        }
-    };
-    recognition.onend = () => setIsCommandListening(false);
-    recognition.start();
-};
-
-// 3. IA Visión Avanzada (TFJS)
-useEffect(() => {
-    const loadModel = async () => {
-        try {
-            const detector = await faceLandmarksDetection.createDetector(
-                faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
-                { runtime: 'tfjs', refineLandmarks: true }
-            );
-            setModel(detector);
+                requestAnimationFrame(analyze);
+            };
+            analyze();
         } catch (err) {
-            console.error("Error al cargar modelo de visión:", err);
+            console.error("Error de audio:", err);
         }
     };
-    loadModel();
-}, []);
 
-const startCamera = async () => {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user', width: 640, height: 480 }
-        });
-        if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            setCameraActive(true);
-            if (monitoring) startAudioAnalysis();
-        }
-    } catch (err) {
-        console.error("Error de cámara:", err);
-    }
-};
+    // 4. Reconocimiento de Comandos de Voz ("Llamar a...")
+    const startVoiceCommands = () => {
+        if (!('webkitSpeechRecognition' in window)) return;
+        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new Recognition();
+        recognition.lang = 'es-ES';
+        recognition.continuous = true;
+        recognition.interimResults = false;
 
-const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-        setCameraActive(false);
-    }
-};
+        recognition.onstart = () => setIsCommandListening(true);
+        recognition.onresult = (event) => {
+            const last = event.results.length - 1;
+            const text = event.results[last][0].transcript.toLowerCase();
 
-useEffect(() => {
-    let requestRef;
-    const detect = async () => {
-        if (model && videoRef.current && cameraActive) {
-            const faces = await model.estimateFaces(videoRef.current);
-            if (faces.length > 0 && isRustReady) {
-                // 1. Lógica de Crew Validation (Aris Vision)
-                if (crewValidationStatus === 'pendiente' && faces.length >= 1) {
-                    const helperDetected = faces.length > 1;
-                    const needsHelper = !!assignedCrew.helper;
+            if (text.includes('aris apelar') || text.includes('apelar')) {
+                startAppealingProcess();
+            } else if (text.includes('llamar a')) {
+                const contactName = text.split('llamar a')[1].trim();
+                const contact = contacts.find(c => c.name.toLowerCase().includes(contactName));
 
-                    if (needsHelper) {
-                        if (helperDetected) {
-                            arisSpeak(`Tripulación confirmada. Hola ${assignedCrew.driver} y ${assignedCrew.helper}. Equipamiento de seguridad verificado.`);
-                            setCrewValidationStatus('validado');
-                        } else {
-                            // Alerta si falta el copiloto asignado
-                            if (Math.random() > 0.998) {
-                                arisSpeak(`Aris dice: No detecto al copiloto ${assignedCrew.helper}. La unidad debe operar con tripulación completa.`);
-                            }
-                        }
+                if (contact) {
+                    if (isReady) {
+                        arisSpeak(`Llamando a ${contact.name}`);
                     } else {
-                        // Solo conductor autorizado
-                        arisSpeak(`Conductor verificado. Hola ${assignedCrew.driver}. Iniciando monitoreo de seguridad. Buen viaje.`);
-                        setCrewValidationStatus('validado');
+                        const synth = window.speechSynthesis;
+                        const utter = new SpeechSynthesisUtterance(`Llamando a ${contact.name}`);
+                        utter.lang = 'es-ES';
+                        synth.speak(utter);
+                    }
+
+                    setTimeout(() => {
+                        window.location.href = `tel:${contact.phone}`;
+                    }, 1500);
+                } else {
+                    if (isReady) {
+                        arisSpeak("No encontré ese contacto en el directorio.");
+                    } else {
+                        const synth = window.speechSynthesis;
+                        const utter = new SpeechSynthesisUtterance("No encontré ese contacto en el directorio.");
+                        utter.lang = 'es-ES';
+                        synth.speak(utter);
                     }
                 }
-
-                const face = faces[0];
-
-                // Extraer los 6 puntos clave de cada ojo para el algoritmo EAR
-                // Mapeo típico de MediaPipe Face Mesh para EAR:
-                // Izquierdo: [33, 160, 158, 133, 153, 144]
-                // Derecho: [362, 385, 387, 263, 373, 380]
-
-                const leftEyeIndices = [33, 160, 158, 133, 153, 144];
-                const rightEyeIndices = [362, 385, 387, 263, 373, 380];
-
-                const getPoints = (indices) => indices.map(idx => ({
-                    x: face.keypoints[idx].x,
-                    y: face.keypoints[idx].y
-                }));
-
-                const faceData = JSON.stringify({
-                    left_eye: getPoints(leftEyeIndices),
-                    right_eye: getPoints(rightEyeIndices)
-                });
-
-                // 🦀 Análisis de Fatiga en Rust (Ultra-Rápido)
-                const fatigueJson = analyze_fatigue(faceData);
-                const fatigueReport = JSON.parse(fatigueJson);
-
-                setIsDrowsy(fatigueReport.is_drowsy);
-
-                if (fatigueReport.alert_level >= 2 && Math.random() > 0.98) {
-                    arisSpeak("Aris dice: Detecto signos de fatiga. Por favor, considera tomar un descanso.");
-                }
-
-                // Detección de uso de celular (Simulada o integrada con otro modelo)
-                // ...
             }
+        };
+        recognition.onend = () => setIsCommandListening(false);
+        recognition.start();
+    };
+
+    // 3. IA Visión Avanzada (TFJS)
+    useEffect(() => {
+        const loadModel = async () => {
+            try {
+                const detector = await faceLandmarksDetection.createDetector(
+                    faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
+                    { runtime: 'tfjs', refineLandmarks: true }
+                );
+                setModel(detector);
+            } catch (err) {
+                console.error("Error al cargar modelo de visión:", err);
+            }
+        };
+        loadModel();
+    }, []);
+
+    const startCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: 640, height: 480 }
+            });
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                setCameraActive(true);
+                if (monitoring) startAudioAnalysis();
+            }
+        } catch (err) {
+            console.error("Error de cámara:", err);
         }
-        requestRef = requestAnimationFrame(detect);
     };
-    if (cameraActive) detect();
-    return () => cancelAnimationFrame(requestRef);
-}, [model, cameraActive]);
 
-const logRoadEvent = async (type, intensity) => {
-    const event = {
-        timestamp: Date.now(),
-        road_event: type,
-        intensity: intensity.toFixed(2),
-        is_synced: 0
+    const stopCamera = () => {
+        if (videoRef.current && videoRef.current.srcObject) {
+            videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+            setCameraActive(false);
+        }
     };
-    const id = await db.sensorLogs.add(event);
-    setRoadEvents(prev => [event, ...prev].slice(0, 5));
 
-    // Flujo de Apelación Ética Aris
-    if (intensity > 15 || type.includes('Brusco')) {
-        const message = `Aris dice: He detectado un ${type}. ¿Deseas justificar este evento? Di "Aris, apelar".`;
-        arisSpeak(message);
+    useEffect(() => {
+        let requestRef;
+        const detect = async () => {
+            if (model && videoRef.current && cameraActive) {
+                const faces = await model.estimateFaces(videoRef.current);
+                if (faces.length > 0 && isRustReady) {
+                    // 1. Lógica de Crew Validation (Aris Vision)
+                    if (crewValidationStatus === 'pendiente' && faces.length >= 1) {
+                        const helperDetected = faces.length > 1;
+                        const needsHelper = !!assignedCrew.helper;
 
-        // Preparar el encabezado del caso
-        setCurrentCase({ id, type, intensity, timestamp: event.timestamp });
-    }
-};
+                        if (needsHelper) {
+                            if (helperDetected) {
+                                arisSpeak(`Tripulación confirmada. Hola ${assignedCrew.driver} y ${assignedCrew.helper}. Equipamiento de seguridad verificado.`);
+                                setCrewValidationStatus('validado');
+                            } else {
+                                // Alerta si falta el copiloto asignado
+                                if (Math.random() > 0.998) {
+                                    arisSpeak(`Aris dice: No detecto al copiloto ${assignedCrew.helper}. La unidad debe operar con tripulación completa.`);
+                                }
+                            }
+                        } else {
+                            // Solo conductor autorizado
+                            arisSpeak(`Conductor verificado. Hola ${assignedCrew.driver}. Iniciando monitoreo de seguridad. Buen viaje.`);
+                            setCrewValidationStatus('validado');
+                        }
+                    }
 
-const startAppealingProcess = () => {
-    if (!currentCase) return;
-    setIsAppealing(true);
-    arisSpeak("Te escucho, por favor describe lo ocurrido.");
+                    const face = faces[0];
 
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new Recognition();
-    recognition.lang = 'es-ES';
+                    // Extraer los 6 puntos clave de cada ojo para el algoritmo EAR
+                    // Mapeo típico de MediaPipe Face Mesh para EAR:
+                    // Izquierdo: [33, 160, 158, 133, 153, 144]
+                    // Derecho: [362, 385, 387, 263, 373, 380]
 
-    recognition.onresult = async (event) => {
-        const transcript = event.results[0][0].transcript;
+                    const leftEyeIndices = [33, 160, 158, 133, 153, 144];
+                    const rightEyeIndices = [362, 385, 387, 263, 373, 380];
 
-        // 🦀 Seguridad de Evidencia con Rust
-        const evidenceData = JSON.stringify({
-            case_id: currentCase.id,
-            vocal_defense: transcript,
-            telemetry_id: currentCase.id,
-            timestamp: currentCase.timestamp
-        });
+                    const getPoints = (indices) => indices.map(idx => ({
+                        x: face.keypoints[idx].x,
+                        y: face.keypoints[idx].y
+                    }));
 
-        const hash = generate_evidence_hash(evidenceData);
+                    const faceData = JSON.stringify({
+                        left_eye: getPoints(leftEyeIndices),
+                        right_eye: getPoints(rightEyeIndices)
+                    });
 
-        const caseFile = {
-            ...currentCase,
-            vocal_defense: transcript,
-            integrity_hash: hash,
-            status: 'pendiendo_revision'
+                    // 🦀 Análisis de Fatiga en Rust (Ultra-Rápido)
+                    const fatigueJson = analyze_fatigue(faceData);
+                    const fatigueReport = JSON.parse(fatigueJson);
+
+                    setIsDrowsy(fatigueReport.is_drowsy);
+
+                    if (fatigueReport.alert_level >= 2 && Math.random() > 0.98) {
+                        arisSpeak("Aris dice: Detecto signos de fatiga. Por favor, considera tomar un descanso.");
+                    }
+
+                    // Detección de uso de celular (Simulada o integrada con otro modelo)
+                    // ...
+                }
+            }
+            requestRef = requestAnimationFrame(detect);
+        };
+        if (cameraActive) detect();
+        return () => cancelAnimationFrame(requestRef);
+    }, [model, cameraActive]);
+
+    const logRoadEvent = async (type, intensity) => {
+        const event = {
+            timestamp: Date.now(),
+            road_event: type,
+            intensity: intensity.toFixed(2),
+            is_synced: 0
+        };
+        const id = await db.sensorLogs.add(event);
+        setRoadEvents(prev => [event, ...prev].slice(0, 5));
+
+        // Flujo de Apelación Ética Aris
+        if (intensity > 15 || type.includes('Brusco')) {
+            const message = `Aris dice: He detectado un ${type}. ¿Deseas justificar este evento? Di "Aris, apelar".`;
+            arisSpeak(message);
+
+            // Preparar el encabezado del caso
+            setCurrentCase({ id, type, intensity, timestamp: event.timestamp });
+        }
+    };
+
+    const startAppealingProcess = () => {
+        if (!currentCase) return;
+        setIsAppealing(true);
+        arisSpeak("Te escucho, por favor describe lo ocurrido.");
+
+        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new Recognition();
+        recognition.lang = 'es-ES';
+
+        recognition.onresult = async (event) => {
+            const transcript = event.results[0][0].transcript;
+
+            // 🦀 Seguridad de Evidencia con Rust
+            const evidenceData = JSON.stringify({
+                case_id: currentCase.id,
+                vocal_defense: transcript,
+                telemetry_id: currentCase.id,
+                timestamp: currentCase.timestamp
+            });
+
+            const hash = generate_evidence_hash(evidenceData);
+
+            const caseFile = {
+                ...currentCase,
+                vocal_defense: transcript,
+                integrity_hash: hash,
+                status: 'pendiendo_revision'
+            };
+
+            // Guardar en base de datos para el Delegado
+            await db.sensorLogs.update(currentCase.id, {
+                vocal_defense: transcript,
+                integrity_hash: hash,
+                status: 'apelado'
+            });
+
+            arisSpeak("Entendido. He empaquetado tu versión con las pruebas de sensores y video. El administrador revisará el caso.");
+            setIsAppealing(false);
+            setCurrentCase(null);
         };
 
-        // Guardar en base de datos para el Delegado
-        await db.sensorLogs.update(currentCase.id, {
-            vocal_defense: transcript,
-            integrity_hash: hash,
-            status: 'apelado'
-        });
-
-        arisSpeak("Entendido. He empaquetado tu versión con las pruebas de sensores y video. El administrador revisará el caso.");
-        setIsAppealing(false);
-        setCurrentCase(null);
+        recognition.start();
     };
 
-    recognition.start();
-};
+    return (
+        <div className="flex flex-col gap-6 animate-fade-in">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-return (
-    <div className="flex flex-col gap-6 animate-fade-in">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            {/* Monitoreo Bio-Acústico e IA */}
-            <div className="glass-card p-6 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <Shield className="text-blue-500" />
-                            Monitor de Seguridad & IA Vision
-                        </h2>
-                        {crewValidationStatus === 'validado' && (
-                            <div className="bg-emerald-600/20 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
-                                <CheckCircle size={12} /> TRIPULACIÓN VALIDADA
-                            </div>
-                        )}
-                    </div>
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${cameraActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-500'}`}>
-                        {cameraActive ? 'Inteligencia Activa' : 'Cámara Off'}
-                    </div>
-                </div>
-
-                <div className="relative aspect-video bg-slate-900 rounded-xl overflow-hidden border border-slate-800">
-                    <video ref={videoRef} autoPlay muted className="w-full h-full object-cover grayscale opacity-60" />
-                    {!cameraActive && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                            <Camera size={48} className="text-slate-700" />
-                            <button onClick={startCamera} className="btn-primary text-xs">Activar Monitoreo Facial</button>
-                        </div>
-                    )}
-
-                    {/* HUD de Alertas */}
-                    <div className="absolute top-4 left-4 flex flex-col gap-2">
-                        {vehicleType === 'moto' && (
-                            <div className="bg-blue-600 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                                <Bike size={16} />
-                                <span className="text-[10px] font-bold">MODO MOTORISTA</span>
-                            </div>
-                        )}
-                        {isPhoneVisible && (
-                            <div className="bg-amber-600 px-3 py-1.5 rounded-lg flex items-center gap-2 animate-bounce">
-                                <Smartphone size={16} />
-                                <span className="text-[10px] font-bold">USO DE CELULAR</span>
-                            </div>
-                        )}
-                        {isDrowsy && (
-                            <div className="bg-red-600 px-3 py-1.5 rounded-lg flex items-center gap-2 animate-pulse">
-                                <ShieldAlert size={16} />
-                                <span className="text-[10px] font-bold">SOMNOLENCIA</span>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Visualizador de Audio (Simple) */}
-                    <div className="absolute bottom-4 left-4 right-4 flex items-end gap-1 h-8">
-                        <Mic size={14} className="text-slate-500 mr-2 mb-1" />
-                        {[...Array(10)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="w-full bg-blue-500/40 rounded-t-sm transition-all duration-100"
-                                style={{ height: `${Math.random() * noiseLevel}%` }}
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800 flex items-center gap-3">
-                        <Volume2 size={16} className="text-blue-400" />
-                        <div>
-                            <p className="text-[9px] text-slate-500 uppercase font-bold">Ruido Motor</p>
-                            <p className="text-xs font-bold">{noiseLevel} dB (Normal)</p>
-                        </div>
-                    </div>
-                    <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800 flex items-center gap-3">
-                        <Wind size={16} className="text-blue-400" />
-                        <div>
-                            <p className="text-[9px] text-slate-500 uppercase font-bold">Frec. Respiratoria</p>
-                            <p className="text-xs font-bold">16 rpm</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Telemetría Avanzada (G-Force & Alertas) */}
-            <div className="glass-card p-6 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold flex items-center gap-2">
-                        <Zap size={20} className="text-amber-400" />
-                        Telemetría Pro G-Shock
-                    </h3>
-                    <button
-                        onClick={() => { setMonitoring(!monitoring); if (!monitoring && cameraActive) startAudioAnalysis(); }}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${monitoring ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.4)]'}`}
-                    >
-                        {monitoring ? 'Detener Sensores' : 'Activar Telemetría'}
-                    </button>
-                </div>
-
-                <div className="flex gap-4 mb-4">
-                    <button
-                        onClick={startVoiceCommands}
-                        className={`flex-1 p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${isCommandListening ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-slate-900/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}
-                    >
-                        <div className={`p-3 rounded-full ${isCommandListening ? 'bg-blue-500 text-white animate-pulse' : 'bg-slate-800'}`}>
-                            <PhoneCall size={20} />
-                        </div>
-                        <span className="text-[10px] font-bold uppercase">{isCommandListening ? 'Modo Comandos On' : 'Comandos de Llamada'}</span>
-                        <p className="text-[8px] opacity-70">Di: "Llamar a [Nombre]"</p>
-                    </button>
-
-                    <div className="flex-1 p-4 bg-slate-900/50 rounded-xl border border-slate-800 flex flex-col items-center gap-2">
-                        <div className="p-3 bg-slate-800 rounded-full text-blue-400">
-                            <Activity size={20} />
-                        </div>
-                        <span className="text-[10px] font-bold uppercase">Estado Sistema</span>
-                        <p className="text-[8px] text-emerald-400">Todo OK</p>
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3 min-h-[150px]">
-                    <h4 className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Historial de Conducción</h4>
-                    {roadEvents.length === 0 ? (
-                        <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-800 rounded-2xl opacity-30">
-                            <Activity size={32} />
-                            <p className="text-[10px] mt-2 italic">Sin incidentes detectados</p>
-                        </div>
-                    ) : (
-                        roadEvents.map((evt, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-slate-700 animate-fade-in">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${evt.road_event === 'Frenado Brusco' ? 'bg-red-500/20 text-red-400' :
-                                        evt.road_event === 'Giro Brusco' ? 'bg-amber-500/20 text-amber-400' :
-                                            'bg-blue-500/20 text-blue-400'
-                                        }`}>
-                                        <AlertTriangle size={16} />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold">{evt.road_event}</p>
-                                        <p className="text-[9px] text-slate-500">Impacto: {evt.intensity}G • {new Date(evt.timestamp).toLocaleTimeString()}</p>
-                                    </div>
+                {/* Monitoreo Bio-Acústico e IA */}
+                <div className="glass-card p-6 flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-xl font-bold flex items-center gap-2">
+                                <Shield className="text-blue-500" />
+                                Monitor de Seguridad & IA Vision
+                            </h2>
+                            {crewValidationStatus === 'validado' && (
+                                <div className="bg-emerald-600/20 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
+                                    <CheckCircle size={12} /> TRIPULACIÓN VALIDADA
                                 </div>
-                                <CheckCircle size={14} className="text-slate-600" />
+                            )}
+                        </div>
+                        <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${cameraActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-500'}`}>
+                            {cameraActive ? 'Inteligencia Activa' : 'Cámara Off'}
+                        </div>
+                    </div>
+
+                    <div className="relative aspect-video bg-slate-900 rounded-xl overflow-hidden border border-slate-800">
+                        <video ref={videoRef} autoPlay muted className="w-full h-full object-cover grayscale opacity-60" />
+                        {!cameraActive && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                                <Camera size={48} className="text-slate-700" />
+                                <button onClick={startCamera} className="btn-primary text-xs">Activar Monitoreo Facial</button>
                             </div>
-                        ))
-                    )}
-                </div>
+                        )}
 
-                <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">Eficiencia en Ralentí</span>
-                        <span className="text-[10px] font-bold text-emerald-400">92%</span>
+                        {/* HUD de Alertas */}
+                        <div className="absolute top-4 left-4 flex flex-col gap-2">
+                            {vehicleType === 'moto' && (
+                                <div className="bg-blue-600 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                    <Bike size={16} />
+                                    <span className="text-[10px] font-bold">MODO MOTORISTA</span>
+                                </div>
+                            )}
+                            {isPhoneVisible && (
+                                <div className="bg-amber-600 px-3 py-1.5 rounded-lg flex items-center gap-2 animate-bounce">
+                                    <Smartphone size={16} />
+                                    <span className="text-[10px] font-bold">USO DE CELULAR</span>
+                                </div>
+                            )}
+                            {isDrowsy && (
+                                <div className="bg-red-600 px-3 py-1.5 rounded-lg flex items-center gap-2 animate-pulse">
+                                    <ShieldAlert size={16} />
+                                    <span className="text-[10px] font-bold">SOMNOLENCIA</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Visualizador de Audio (Simple) */}
+                        <div className="absolute bottom-4 left-4 right-4 flex items-end gap-1 h-8">
+                            <Mic size={14} className="text-slate-500 mr-2 mb-1" />
+                            {[...Array(10)].map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="w-full bg-blue-500/40 rounded-t-sm transition-all duration-100"
+                                    style={{ height: `${Math.random() * noiseLevel}%` }}
+                                />
+                            ))}
+                        </div>
                     </div>
-                    <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500" style={{ width: '92%' }}></div>
-                    </div>
-                </div>
-            </div>
 
-        </div>
-
-        {/* Formularios Manuales SST con Voz */}
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="glass-card p-6">
-                <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-                    <ClipboardCheck size={18} className="text-blue-400" />
-                    Inspección Pre-Uso (Voz Habilitada)
-                </h3>
-                <div className="flex flex-col gap-3">
-                    {['luces', 'frenos', 'neumaticos', 'documentacion'].map(item => (
-                        <label key={item} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-slate-800">
-                            <span className="text-xs uppercase font-bold text-slate-400">{item}</span>
-                            <input
-                                type="checkbox"
-                                checked={checklist[item]}
-                                onChange={() => setChecklist({ ...checklist, [item]: !checklist[item] })}
-                                className="w-5 h-5 accent-blue-500"
-                            />
-                        </label>
-                    ))}
-                    <div className="mt-2">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Observaciones</p>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                className="input-field flex-1"
-                                placeholder="Dictar notas de inspección..."
-                                value={checklist.notas}
-                                onChange={(e) => setChecklist({ ...checklist, notas: e.target.value })}
-                            />
-                            <VoiceButton onResult={(text) => setChecklist({ ...checklist, notas: text })} />
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800 flex items-center gap-3">
+                            <Volume2 size={16} className="text-blue-400" />
+                            <div>
+                                <p className="text-[9px] text-slate-500 uppercase font-bold">Ruido Motor</p>
+                                <p className="text-xs font-bold">{noiseLevel} dB (Normal)</p>
+                            </div>
+                        </div>
+                        <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800 flex items-center gap-3">
+                            <Wind size={16} className="text-blue-400" />
+                            <div>
+                                <p className="text-[9px] text-slate-500 uppercase font-bold">Frec. Respiratoria</p>
+                                <p className="text-xs font-bold">16 rpm</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="glass-card p-6">
-                <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-                    <Heart size={18} className="text-rose-400" />
-                    Estado Biopsicosomático
-                </h3>
-                <div className="flex flex-col gap-4">
-                    <div>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Horas de sueño</p>
-                        <input
-                            type="range" min="0" max="12" step="0.5"
-                            value={biostate.horasSueno}
-                            onChange={(e) => setBiostate({ ...biostate, horasSueno: e.target.value })}
-                            className="w-full"
-                        />
-                        <p className="text-xs text-center mt-1 font-bold">{biostate.horasSueno} Horas</p>
+                {/* Telemetría Avanzada (G-Force & Alertas) */}
+                <div className="glass-card p-6 flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-bold flex items-center gap-2">
+                            <Zap size={20} className="text-amber-400" />
+                            Telemetría Pro G-Shock
+                        </h3>
+                        <button
+                            onClick={() => { setMonitoring(!monitoring); if (!monitoring && cameraActive) startAudioAnalysis(); }}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${monitoring ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.4)]'}`}
+                        >
+                            {monitoring ? 'Detener Sensores' : 'Activar Telemetría'}
+                        </button>
                     </div>
-                    <div>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">¿Cómo te sientes hoy?</p>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                className="input-field flex-1"
-                                placeholder="Dictar estado de ánimo..."
-                                value={biostate.comentarios}
-                                onChange={(e) => setBiostate({ ...biostate, comentarios: e.target.value })}
-                            />
-                            <VoiceButton onResult={(text) => setBiostate({ ...biostate, comentarios: text })} />
+
+                    <div className="flex gap-4 mb-4">
+                        <button
+                            onClick={startVoiceCommands}
+                            className={`flex-1 p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${isCommandListening ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-slate-900/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}
+                        >
+                            <div className={`p-3 rounded-full ${isCommandListening ? 'bg-blue-500 text-white animate-pulse' : 'bg-slate-800'}`}>
+                                <PhoneCall size={20} />
+                            </div>
+                            <span className="text-[10px] font-bold uppercase">{isCommandListening ? 'Modo Comandos On' : 'Comandos de Llamada'}</span>
+                            <p className="text-[8px] opacity-70">Di: "Llamar a [Nombre]"</p>
+                        </button>
+
+                        <div className="flex-1 p-4 bg-slate-900/50 rounded-xl border border-slate-800 flex flex-col items-center gap-2">
+                            <div className="p-3 bg-slate-800 rounded-full text-blue-400">
+                                <Activity size={20} />
+                            </div>
+                            <span className="text-[10px] font-bold uppercase">Estado Sistema</span>
+                            <p className="text-[8px] text-emerald-400">Todo OK</p>
                         </div>
                     </div>
-                    <button className="btn-primary w-full justify-center mt-2 group">
-                        <CheckCircle size={18} className="group-hover:scale-110 transition-transform" />
-                        Guardar Reporte SST
-                    </button>
+
+                    <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3 min-h-[150px]">
+                        <h4 className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Historial de Conducción</h4>
+                        {roadEvents.length === 0 ? (
+                            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-800 rounded-2xl opacity-30">
+                                <Activity size={32} />
+                                <p className="text-[10px] mt-2 italic">Sin incidentes detectados</p>
+                            </div>
+                        ) : (
+                            roadEvents.map((evt, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-slate-700 animate-fade-in">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${evt.road_event === 'Frenado Brusco' ? 'bg-red-500/20 text-red-400' :
+                                            evt.road_event === 'Giro Brusco' ? 'bg-amber-500/20 text-amber-400' :
+                                                'bg-blue-500/20 text-blue-400'
+                                            }`}>
+                                            <AlertTriangle size={16} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold">{evt.road_event}</p>
+                                            <p className="text-[9px] text-slate-500">Impacto: {evt.intensity}G • {new Date(evt.timestamp).toLocaleTimeString()}</p>
+                                        </div>
+                                    </div>
+                                    <CheckCircle size={14} className="text-slate-600" />
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">Eficiencia en Ralentí</span>
+                            <span className="text-[10px] font-bold text-emerald-400">92%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500" style={{ width: '92%' }}></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            {/* Formularios Manuales SST con Voz */}
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="glass-card p-6">
+                    <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
+                        <ClipboardCheck size={18} className="text-blue-400" />
+                        Inspección Pre-Uso (Voz Habilitada)
+                    </h3>
+                    <div className="flex flex-col gap-3">
+                        {['luces', 'frenos', 'neumaticos', 'documentacion'].map(item => (
+                            <label key={item} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-slate-800">
+                                <span className="text-xs uppercase font-bold text-slate-400">{item}</span>
+                                <input
+                                    type="checkbox"
+                                    checked={checklist[item]}
+                                    onChange={() => setChecklist({ ...checklist, [item]: !checklist[item] })}
+                                    className="w-5 h-5 accent-blue-500"
+                                />
+                            </label>
+                        ))}
+                        <div className="mt-2">
+                            <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Observaciones</p>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    className="input-field flex-1"
+                                    placeholder="Dictar notas de inspección..."
+                                    value={checklist.notas}
+                                    onChange={(e) => setChecklist({ ...checklist, notas: e.target.value })}
+                                />
+                                <VoiceButton onResult={(text) => setChecklist({ ...checklist, notas: text })} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="glass-card p-6">
+                    <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
+                        <Heart size={18} className="text-rose-400" />
+                        Estado Biopsicosomático
+                    </h3>
+                    <div className="flex flex-col gap-4">
+                        <div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Horas de sueño</p>
+                            <input
+                                type="range" min="0" max="12" step="0.5"
+                                value={biostate.horasSueno}
+                                onChange={(e) => setBiostate({ ...biostate, horasSueno: e.target.value })}
+                                className="w-full"
+                            />
+                            <p className="text-xs text-center mt-1 font-bold">{biostate.horasSueno} Horas</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">¿Cómo te sientes hoy?</p>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    className="input-field flex-1"
+                                    placeholder="Dictar estado de ánimo..."
+                                    value={biostate.comentarios}
+                                    onChange={(e) => setBiostate({ ...biostate, comentarios: e.target.value })}
+                                />
+                                <VoiceButton onResult={(text) => setBiostate({ ...biostate, comentarios: text })} />
+                            </div>
+                        </div>
+                        <button className="btn-primary w-full justify-center mt-2 group">
+                            <CheckCircle size={18} className="group-hover:scale-110 transition-transform" />
+                            Guardar Reporte SST
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-);
+    );
 }

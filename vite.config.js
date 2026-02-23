@@ -14,6 +14,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      workbox: {
+        maximumFileSizeToCacheInBytes: 20 * 1024 * 1024, // 20MB para soportar los modelos WASM de IA
+      },
       manifest: {
         name: 'Aris - Copiloto Logístico Inteligente',
         short_name: 'Aris',

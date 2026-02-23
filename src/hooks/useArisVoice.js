@@ -5,7 +5,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import VoiceService from '../services/VoiceService';
 
-export const useArisVoice = () => {
+const useArisVoice = () => {
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isReady, setIsReady] = useState(false);
 
@@ -53,3 +53,5 @@ export const useArisVoice = () => {
         isReady
     };
 };
+
+export default useArisVoice;
